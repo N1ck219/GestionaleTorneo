@@ -52,7 +52,8 @@ Serve un host Python con **disco persistente** (database SQLite e certificati st
 | Render / Fly.io | a pagamento (≈ 2–7 $/mese) | Usano il `Dockerfile`/`render.yaml`. I piani gratuiti non hanno disco persistente: i dati andrebbero persi. |
 | PC in locale | 0 € | `python wsgi.py` + hotspot: nessuna iscrizione da remoto, utile come piano B. |
 
-### PythonAnywhere in breve
+### PythonAnywhere
+Guida completa e script automatico: **[GUIDA_PYTHONANYWHERE.md](GUIDA_PYTHONANYWHERE.md)**. Versione manuale:
 1. Console Bash: `git clone <repo> && cd GestionaleTorneo && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`
 2. Tab *Web* → Add a new web app → Manual configuration (stessa versione Python del venv); imposta *Virtualenv* su `.../.venv`.
 3. Nel file WSGI indicato:
