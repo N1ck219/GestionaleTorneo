@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: gestionale-torneo
+    runtime: docker
+    plan: starter          # serve un disco persistente: il piano gratuito non lo offre
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: BOSS_EMAIL
+        sync: false
+      - key: BOSS_PASSWORD
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true

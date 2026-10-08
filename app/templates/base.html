@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="{{ csrf }}">
+<title>{% block title %}{{ t_name }}{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="{{ url_for('main.home') }}">🏀 {{ t_name }}</a>
+  <nav>
+    <a href="{{ url_for('main.home') }}">Live</a>
+    <a href="{{ url_for('main.groups_page') }}">Gironi</a>
+    <a href="{{ url_for('main.bracket_page') }}">Tabelloni</a>
+    <a href="{{ url_for('main.schedule_page') }}">Calendario</a>
+    <a href="{{ url_for('main.teams_page') }}">Squadre</a>
+    {% if user %}
+      {% if user.role == 'boss' %}<a class="hl" href="{{ url_for('main.admin_home') }}">Admin</a>
+      <a class="hl" href="{{ url_for('main.table_home') }}">Tavolo</a>
+      {% elif user.role == 'scorer' %}<a class="hl" href="{{ url_for('main.table_home') }}">Tavolo</a>
+      {% else %}<a class="hl" href="{{ url_for('main.team_home') }}">La mia squadra</a>{% endif %}
+      <form method="post" action="{{ url_for('main.logout') }}" class="inline">
+        <input type="hidden" name="_csrf" value="{{ csrf }}"><button class="link">Esci</button></form>
+    {% else %}
+      {% if registration_open %}<a class="hl" href="{{ url_for('main.register') }}">Iscriviti</a>{% endif %}
+      <a href="{{ url_for('main.login') }}">Accedi</a>
+    {% endif %}
+  </nav>
+</header>
+<main>
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="flash {{ cat }}">{{ msg }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

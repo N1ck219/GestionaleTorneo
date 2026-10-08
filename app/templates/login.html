@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Accedi</h1>
+<form method="post" class="card narrow">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <label>Email<input type="email" name="email" required autocomplete="username"></label>
+  <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
+  <button class="btn">Accedi</button>
+</form>
+<p class="muted">Capitani, contapunti e organizzatori usano lo stesso accesso.</p>
+{% endblock %}

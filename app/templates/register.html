@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Iscrivi la tua squadra</h1>
+<p class="muted">Servono da {{ min_p }} a {{ max_p }} giocatori. Il certificato medico di ognuno va caricato dopo l'iscrizione
+(oppure consegnato in seguito: il responsabile segnerà chi manca).</p>
+<form method="post" class="card" id="reg">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <label>Nome squadra<input name="team_name" maxlength="60" required value="{{ form.get('team_name','') }}"></label>
+  <label>Telefono del capitano<input name="phone" type="tel" value="{{ form.get('phone','') }}"></label>
+  <label>Email (serve per accedere)<input name="email" type="email" required value="{{ form.get('email','') }}"></label>
+  <label>Password (min. 8 caratteri)<input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
+  <h3>Giocatori</h3>
+  <div id="players">
+  {% for fn, ln, bd in players %}
+    <div class="prow">
+      <input name="first_name" placeholder="Nome" value="{{ fn }}">
+      <input name="last_name" placeholder="Cognome" value="{{ ln }}">
+      <input name="birth_date" type="date" value="{{ bd or '' }}" title="Data di nascita">
+    </div>
+  {% endfor %}
+  </div>
+  <button type="button" class="btn ghost" id="addp" data-max="{{ max_p }}">+ Aggiungi giocatore</button>
+  <button class="btn">Invia iscrizione</button>
+</form>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import cert_badge %}
+{% block content %}
+{% include 'admin/_nav.html' %}
+<h1>Pannello organizzatore</h1>
+<div class="stats">
+  <div class="stat"><b>{{ teams|length }}</b><span>squadre iscritte</span></div>
+  <div class="stat"><b>{{ teams|selectattr('status','equalto','confirmed')|list|length }}</b><span>confermate</span></div>
+  <div class="stat {{ 'alert' if missing }}"><b>{{ missing|length }}</b><span>squadre con certificati mancanti</span></div>
+  <div class="stat"><b>{{ phase_labels[phase] }}</b><span>fase attuale</span></div>
+</div>
+
+<section class="card {{ 'alertcard' if missing }}">
+  <h2>⚠ Certificati medici mancanti</h2>
+  {% if not missing %}<p class="ok">Tutti i certificati sono a posto. 🎉</p>{% endif %}
+  {% for t in missing %}
+    <h3><a href="{{ url_for('main.admin_team', tid=t.id) }}">{{ t.name }}</a>
+      <small class="muted">({{ t.certs_missing }} su {{ t.players|length }}{% if t.status != 'confirmed' %} · non confermata{% endif %})</small></h3>
+    <ul class="plain">
+    {% for p in t.players if p.cert != 'ok' %}
+      <li class="prow">{{ p.last_name }} {{ p.first_name }} {{ cert_badge(p.cert) }}
+        {% if p.cert_file %}<a href="{{ url_for('main.cert_file', pid=p.id) }}" target="_blank">apri file</a>{% endif %}
+        <form method="post" action="{{ url_for('main.admin_cert_toggle', pid=p.id) }}" class="inline">
+          <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="next" value="home">
+          <button class="btn small">Segna consegnato</button></form></li>
+    {% endfor %}
+    </ul>
+  {% endfor %}
+  <p><a href="{{ url_for('main.admin_export') }}">Scarica elenco CSV</a></p>
+</section>
+
+<section class="card">
+  <h2>Squadre in attesa di conferma</h2>
+  {% set pending = teams|selectattr('status','equalto','pending')|list %}
+  {% if not pending %}<p class="muted">Nessuna.</p>{% endif %}
+  {% for t in pending %}<p><a href="{{ url_for('main.admin_team', tid=t.id) }}">{{ t.name }}</a>
+    — {{ t.players|length }} giocatori{% if t.players|length < min_p %} <span class="badge bad">meno di {{ min_p }}</span>{% endif %}</p>{% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Gironi</h1>
+<p class="muted">Vittoria 2 punti, sconfitta 0. I punti vengono assegnati alla chiusura della partita da parte del tavolo.</p>
+<div data-refresh="{{ url_for('main.fragment_groups') }}" data-every="6000">{% include '_groups.html' %}</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import cert_badge %}
+{% block content %}
+{% include 'admin/_nav.html' %}
+<h1>{{ team.name }}</h1>
+<p class="muted">{{ team.email }}{% if team.phone %} · {{ team.phone }}{% endif %}</p>
+<form method="post" action="{{ url_for('main.admin_team_status', tid=team.id) }}" class="prow">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  {% if team.status == 'confirmed' %}<button name="action" value="unconfirm" class="btn ghost">Segna come in attesa</button>
+  {% else %}<button name="action" value="confirm" class="btn">Conferma iscrizione</button>{% endif %}
+  <button name="action" value="delete" class="btn danger" onclick="return confirm('Eliminare definitivamente la squadra?')">Elimina</button>
+</form>
+<section class="card"><h2>Giocatori</h2>
+{% for p in team.players %}
+  <div class="player prow">
+    <b>{{ p.last_name }} {{ p.first_name }}</b> <span class="muted">{{ p.birth_date or '' }}</span>
+    {{ cert_badge(p.cert) }}
+    {% if p.cert_file %}<a href="{{ url_for('main.cert_file', pid=p.id) }}" target="_blank">apri file</a>{% endif %}
+    <form method="post" action="{{ url_for('main.admin_cert_toggle', pid=p.id) }}" class="inline">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <button class="btn small {{ 'ghost' if p.cert == 'ok' }}">{{ 'Togli spunta' if p.cert == 'ok' else '✔ Certificato ricevuto' }}</button></form>
+    <form method="post" enctype="multipart/form-data" action="{{ url_for('main.cert_upload', pid=p.id) }}" class="upl inline">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required><button class="btn small ghost">Carica file</button></form>
+  </div>
+{% endfor %}
+</section>
+{% endblock %}

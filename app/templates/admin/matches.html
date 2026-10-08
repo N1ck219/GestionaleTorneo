@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include 'admin/_nav.html' %}
+<h1>Orari e campi</h1>
+{% if not matches %}<p class="muted">Nessuna partita ancora.</p>{% endif %}
+{% for m in matches %}
+<form method="post" class="card prow" id="m{{ m.id }}">
+  <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="match_id" value="{{ m.id }}">
+  <span class="grow"><b>{{ m.team1_name or '—' }}</b> vs <b>{{ m.team2_name or '—' }}</b><br><small class="muted">{{ m|match_title }} · {{ m.status }}</small></span>
+  <label>Campo <input type="number" name="court" min="1" max="8" value="{{ m.court or '' }}" class="num"></label>
+  <label>Orario <input type="datetime-local" name="start_time" value="{{ (m.start_time or '').replace(' ', 'T') }}"></label>
+  <button class="btn small">Salva</button>
+  <a href="{{ url_for('main.table_match', match_id=m.id) }}">Tavolo</a>
+</form>
+{% endfor %}
+{% endblock %}

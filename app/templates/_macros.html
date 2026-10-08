@@ -1,0 +1,41 @@
+{% macro match_card(m, link=true, admin=false) %}
+<div class="match {{ m.status }}">
+  <div class="meta">
+    <span>{{ m|match_title }}</span>
+    <span>{% if m.court %}Campo {{ m.court }}{% endif %}{% if m.start_time %} · {{ m.start_time|when }}{% endif %}</span>
+  </div>
+  <div class="row">
+    <span class="team">{{ m.team1_name or '—' }}</span>
+    <span class="score">{% if m.status == 'scheduled' %}–{% else %}{{ m.score1 }}{% endif %}</span>
+  </div>
+  <div class="row">
+    <span class="team">{{ m.team2_name or '—' }}</span>
+    <span class="score">{% if m.status == 'scheduled' %}–{% else %}{{ m.score2 }}{% endif %}</span>
+  </div>
+  <div class="foot">
+    {% if m.status == 'live' %}<span class="badge live">● LIVE</span>
+    {% elif m.status == 'finished' %}<span class="badge">Finale</span>
+    {% else %}<span class="badge dim">Da giocare</span>{% endif %}
+    {% if link %}<a href="{{ url_for('main.match_page', match_id=m.id) }}">Dettaglio</a>{% endif %}
+    {% if admin %}<a href="{{ url_for('main.table_match', match_id=m.id) }}">Tavolo</a>{% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{% macro standings_table(rows) %}
+<table class="std">
+  <thead><tr><th>#</th><th>Squadra</th><th>G</th><th>V</th><th>P</th><th>+/-</th><th>Pt</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr><td>{{ r.position }}</td><td class="l">{{ r.name }}</td><td>{{ r.played }}</td><td>{{ r.wins }}</td>
+        <td>{{ r.losses }}</td><td>{{ '%+d'|format(r.diff) }}</td><td><b>{{ r.pts }}</b></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% macro cert_badge(state) %}
+{% if state == 'ok' %}<span class="badge ok">✔ Certificato OK</span>
+{% elif state == 'uploaded' %}<span class="badge warn">⏳ Da verificare</span>
+{% else %}<span class="badge bad">✖ Mancante</span>{% endif %}
+{% endmacro %}

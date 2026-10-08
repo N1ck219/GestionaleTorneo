@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import match_card, standings_table, cert_badge %}
+{% block content %}
+<h1>{{ team.name }}</h1>
+<p>
+  {% if team.status == 'confirmed' %}<span class="badge ok">Iscrizione confermata</span>
+  {% else %}<span class="badge warn">In attesa di conferma dal responsabile</span>{% endif %}
+  {% if team.group_name %}<span class="badge">{{ team.group_name }}</span>{% endif %}
+</p>
+
+<section class="card">
+  <h2>Giocatori e certificati medici</h2>
+  {% if team.certs_missing %}<p class="flash warn">Mancano {{ team.certs_missing }} certificati su {{ team.players|length }}. Caricali qui oppure consegnali al responsabile.</p>{% endif %}
+  {% for p in team.players %}
+  <div class="player">
+    <form method="post" action="{{ url_for('main.player_edit', pid=p.id) }}" class="prow">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input name="first_name" value="{{ p.first_name }}" required>
+      <input name="last_name" value="{{ p.last_name }}" required>
+      <input name="birth_date" type="date" value="{{ p.birth_date or '' }}">
+      <button class="btn small ghost">Salva</button>
+    </form>
+    <div class="prow">
+      {{ cert_badge(p.cert) }}
+      {% if p.cert_file %}<a href="{{ url_for('main.cert_file', pid=p.id) }}" target="_blank">{{ p.cert_original_name }}</a>{% endif %}
+      {% if p.cert != 'ok' %}
+      <form method="post" enctype="multipart/form-data" action="{{ url_for('main.cert_upload', pid=p.id) }}" class="upl">
+        <input type="hidden" name="_csrf" value="{{ csrf }}">
+        <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf" required>
+        <button class="btn small">Carica</button>
+      </form>
+      {% endif %}
+      {% if team.players|length > min_p %}
+      <form method="post" action="{{ url_for('main.player_delete', pid=p.id) }}" onsubmit="return confirm('Rimuovere il giocatore?')">
+        <input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn small danger">Rimuovi</button></form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% if team.players|length < max_p %}
+  <form method="post" action="{{ url_for('main.player_add') }}" class="prow addrow">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <input name="first_name" placeholder="Nome" required>
+    <input name="last_name" placeholder="Cognome" required>
+    <input name="birth_date" type="date">
+    <button class="btn small">+ Aggiungi</button>
+  </form>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Il mio calendario</h2>
+  {% if matches %}<div class="grid">{% for m in matches %}{{ match_card(m) }}{% endfor %}</div>
+  {% else %}<p class="muted">Il calendario sarà disponibile dopo il sorteggio dei gironi.</p>{% endif %}
+</section>
+
+{% if group %}
+<section class="card"><h2>{{ group.name }}</h2>{{ standings_table(group.standings) }}</section>
+{% endif %}
+{% endblock %}

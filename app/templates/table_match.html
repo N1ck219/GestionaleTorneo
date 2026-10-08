@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<p><a href="{{ url_for('main.table_home') }}">← Tutte le partite</a></p>
+<div class="panel" id="panel" data-id="{{ m.id }}" data-status="{{ m.status }}" data-boss="{{ 1 if user.role == 'boss' else 0 }}">
+  <div class="meta">{{ m|match_title }}{% if m.court %} · Campo {{ m.court }}{% endif %}</div>
+  <div class="sides">
+    {% for n in (1, 2) %}
+    <div class="side">
+      <div class="tname">{{ m['team%d_name' % n] or '—' }}</div>
+      <div class="big" id="s{{ n }}">{{ m['score%d' % n] }}</div>
+      <div class="pts">
+        <button class="pt" data-team="{{ n }}" data-delta="1">+1</button>
+        <button class="pt" data-team="{{ n }}" data-delta="2">+2</button>
+        <button class="pt undo" data-team="{{ n }}" data-delta="-1">−1</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="ctrl">
+    <button class="btn" id="b-start">▶ Inizia partita</button>
+    <button class="btn danger" id="b-finish">■ Fine partita (assegna punti)</button>
+    <button class="btn ghost" id="b-reopen">↺ Riapri partita</button>
+  </div>
+  <p id="msg" class="flash error" hidden></p>
+  <p class="muted" id="state"></p>
+</div>
+{% endblock %}

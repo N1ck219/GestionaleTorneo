@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include 'admin/_nav.html' %}
+<h1>Squadre</h1>
+<table class="std wide">
+  <thead><tr><th class="l">Squadra</th><th>Giocatori</th><th>Certificati</th><th>Stato</th><th>Girone</th></tr></thead>
+  <tbody>
+  {% for t in teams %}
+    <tr><td class="l"><a href="{{ url_for('main.admin_team', tid=t.id) }}">{{ t.name }}</a></td>
+      <td>{{ t.players|length }}{% if t.players|length < min_p %} <span class="badge bad">!</span>{% endif %}</td>
+      <td>{% if t.certs_missing %}<span class="badge bad">mancano {{ t.certs_missing }}</span>{% else %}<span class="badge ok">OK</span>{% endif %}</td>
+      <td>{{ 'Confermata' if t.status == 'confirmed' else 'In attesa' }}</td><td>{{ t.group_name or '—' }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="hero"><h1>{{ t_name }}</h1><p class="muted">{{ phase }}</p>
+{% if info %}<p class="info">{{ info }}</p>{% endif %}
+{% if registration_open and not user %}<a class="btn" href="{{ url_for('main.register') }}">Iscrivi la tua squadra</a>{% endif %}</div>
+<div data-refresh="{{ url_for('main.fragment_live') }}" data-every="4000">{% include '_live.html' %}</div>
+{% endblock %}

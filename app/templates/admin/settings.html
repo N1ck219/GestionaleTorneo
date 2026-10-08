@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include 'admin/_nav.html' %}
+<h1>Impostazioni</h1>
+<form method="post" class="card narrow">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <label>Nome torneo<input name="tournament_name" value="{{ s.tournament_name }}"></label>
+  <label>Informazioni (mostrate in home: luogo, date, regolamento…)<textarea name="tournament_info" rows="4">{{ s.tournament_info }}</textarea></label>
+  <label class="chk"><input type="checkbox" name="registration_open" {{ 'checked' if s.registration_open == '1' }}> Iscrizioni aperte</label>
+  <label>Giocatori minimi per squadra<input type="number" name="min_players" value="{{ s.min_players }}" min="3" max="12"></label>
+  <label>Giocatori massimi per squadra<input type="number" name="max_players" value="{{ s.max_players }}" min="3" max="12"></label>
+  <label>Numero di campi<input type="number" name="courts" value="{{ s.courts }}" min="1" max="8"></label>
+  <label>Minuti per partita (slot)<input type="number" name="match_minutes" value="{{ s.match_minutes }}" min="5" max="90"></label>
+  <label>Inizio torneo<input type="datetime-local" name="start_time" value="{{ s.start_time.replace(' ', 'T') }}"></label>
+  <button class="btn">Salva</button>
+</form>
+{% endblock %}

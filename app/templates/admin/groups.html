@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include 'admin/_nav.html' %}
+<h1>Gironi e fasi</h1>
+<p>Squadre confermate: <b>{{ n_confirmed }}</b> · fase attuale: <b>{{ {'registration':'iscrizioni','drawn':'gironi sorteggiati','groups':'gironi in corso','knockout':'fase finale'}[phase] }}</b></p>
+
+{% if phase in ('registration', 'drawn') %}
+<section class="card"><h2>1. Sorteggio gironi</h2>
+  {% if n_confirmed < 2 %}<p class="muted">Conferma almeno 2 squadre.</p>
+  {% else %}
+  <p>Con {{ n_confirmed }} squadre consigliati <b>{{ suggested }}</b> gironi ({{ sizes|join(' + ') }} squadre).</p>
+  <form method="post" class="prow"><input type="hidden" name="_csrf" value="{{ csrf }}">
+    <input type="hidden" name="action" value="draw">
+    <label>Numero gironi <input type="number" name="n_groups" min="1" max="{{ n_confirmed // 2 }}" placeholder="{{ suggested }}"></label>
+    <button class="btn">{{ 'Rifai il sorteggio' if groups else 'Sorteggia' }}</button></form>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if groups %}
+<section class="card"><h2>Gironi</h2>
+  <div class="grid">
+  {% for g in groups %}
+    <div class="card"><h3>{{ g.name }}</h3>
+    {% for t in g.teams %}
+      <form method="post" class="prow"><input type="hidden" name="_csrf" value="{{ csrf }}">
+        <input type="hidden" name="action" value="move"><input type="hidden" name="team_id" value="{{ t.id }}">
+        <span>{{ t.name }}</span>
+        {% if phase == 'drawn' %}<select name="group_id" onchange="this.form.submit()">
+          {% for g2 in groups %}<option value="{{ g2.id }}" {{ 'selected' if g2.id == g.id }}>{{ g2.name }}</option>{% endfor %}
+        </select>{% endif %}
+      </form>
+    {% endfor %}</div>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if phase == 'drawn' %}
+<section class="card"><h2>2. Calendario gironi</h2>
+  <p>Genera tutte le partite (andata singola) con campi e orari secondo le impostazioni.</p>
+  <form method="post"><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="action" value="matches">
+    <button class="btn">Genera calendario</button></form>
+</section>
+{% endif %}
+
+{% if phase == 'groups' %}
+<section class="card"><h2>3. Fase finale</h2>
+  {% if not complete %}<p class="muted">Disponibile quando tutte le partite dei gironi sono concluse.</p>
+  {% else %}
+  <p>La metà superiore della classifica gioca il tabellone principale, le altre il tabellone di consolazione.</p>
+  <form method="post" class="prow"><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="action" value="knockout">
+    <label>Squadre nel tabellone principale <input type="number" name="main_size" min="2" placeholder="{{ main_default }}"></label>
+    <label>Inizio fase finale <input type="datetime-local" name="ko_start"></label>
+    <button class="btn">Genera tabelloni</button></form>
+  {% endif %}
+  <form method="post" onsubmit="return confirm('Eliminare il calendario dei gironi?')"><input type="hidden" name="_csrf" value="{{ csrf }}">
+    <input type="hidden" name="action" value="delete_matches"><button class="btn danger small">Elimina calendario gironi (solo se nessuna partita è iniziata)</button></form>
+</section>
+{% endif %}
+
+{% if phase == 'knockout' %}
+<section class="card"><h2>Fase finale generata</h2>
+  <form method="post" onsubmit="return confirm('Eliminare i tabelloni?')"><input type="hidden" name="_csrf" value="{{ csrf }}">
+    <input type="hidden" name="action" value="delete_knockout"><button class="btn danger small">Elimina tabelloni (solo se non iniziati)</button></form>
+</section>
+{% endif %}
+{% endblock %}

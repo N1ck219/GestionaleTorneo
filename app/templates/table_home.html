@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import match_card %}
+{% block content %}
+<h1>Tavolo – contapunti</h1>
+<section><h2>In corso</h2>
+  {% if live %}<div class="grid">{% for m in live %}
+    <a class="tilelink" href="{{ url_for('main.table_match', match_id=m.id) }}">{{ match_card(m, link=false) }}</a>{% endfor %}</div>
+  {% else %}<p class="muted">Nessuna partita in corso.</p>{% endif %}</section>
+<section><h2>Da giocare</h2>
+  {% if todo %}<div class="grid">{% for m in todo %}
+    <a class="tilelink" href="{{ url_for('main.table_match', match_id=m.id) }}">{{ match_card(m, link=false) }}</a>{% endfor %}</div>
+  {% else %}<p class="muted">Nessuna partita pronta.</p>{% endif %}</section>
+<section><h2>Concluse di recente</h2>
+  <div class="grid">{% for m in done %}
+    <a class="tilelink" href="{{ url_for('main.table_match', match_id=m.id) }}">{{ match_card(m, link=false) }}</a>{% endfor %}</div></section>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% from '_macros.html' import match_card %}
+{% macro tree(rounds) %}
+  {% if not rounds %}<p class="muted">Non ancora generato.</p>{% endif %}
+  <div class="bracket">
+  {% for r in rounds %}
+    <div class="col"><h3>{{ r.label }}</h3>
+      {% for m in r.matches %}{{ match_card(m) }}{% endfor %}</div>
+  {% endfor %}
+  </div>
+{% endmacro %}
+<section><h2>🏆 Fase finale</h2>{{ tree(main) }}</section>
+<section><h2>Tabellone di consolazione</h2>{{ tree(cons) }}</section>

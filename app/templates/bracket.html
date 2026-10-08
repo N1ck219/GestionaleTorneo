@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Tabelloni</h1>
+<div data-refresh="{{ url_for('main.fragment_bracket') }}" data-every="6000">{% include '_bracket.html' %}</div>
+{% endblock %}
