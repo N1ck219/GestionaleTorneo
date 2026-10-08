@@ -47,6 +47,11 @@ def register_helpers(app):
         resp.headers.setdefault("X-Content-Type-Options", "nosniff")
         resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
         resp.headers.setdefault("Referrer-Policy", "same-origin")
+        resp.headers.setdefault("Content-Security-Policy",
+                                "default-src 'self'; img-src 'self' data:; object-src 'none'; "
+                                "frame-ancestors 'self'; base-uri 'self'; form-action 'self'")
+        if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
+            resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
         return resp
 
     @app.context_processor
@@ -223,11 +228,11 @@ def fragment_match(match_id):
 
 # ------------------------------------------------------------------- accesso
 
-def throttled(key):
+def throttled(key, limit=10):
     now = time.time()
     hits = [t for t in _attempts.get(key, []) if now - t < 300]
     _attempts[key] = hits
-    return len(hits) >= 10
+    return len(hits) >= limit
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -266,6 +271,10 @@ def register():
     min_p = S.get_int(db, "min_players", 4)
     max_p = S.get_int(db, "max_players", 8)
     if request.method == "POST":
+        rkey = "reg|%s" % request.remote_addr
+        if throttled(rkey, 15):
+            return fail("Troppe richieste, riprova tra qualche minuto.", "main.register")
+        _attempts.setdefault(rkey, []).append(time.time())
         f = request.form
         team = f.get("team_name", "").strip()
         email = f.get("email", "").strip().lower()
@@ -394,6 +403,8 @@ def current_upload_dir():
 def cert_upload(pid):
     db = get_db()
     p = owned_player(db, pid)
+    if g.user["role"] == "team" and p["cert_ok"]:
+        return fail("Il certificato è già stato verificato.", "main.team_home")
     back = ("main.admin_team", {"tid": p["team_id"]}) if g.user["role"] == "boss" else ("main.team_home", {})
     f = request.files.get("file")
     if not f or not f.filename:

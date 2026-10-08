@@ -1,31 +1,55 @@
 (function () {
   var csrf = (document.querySelector('meta[name=csrf-token]') || {}).content;
 
+  // --- conferme e auto-submit (niente handler inline: la CSP li vieta)
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-confirm]');
+    if (b && !confirm(b.dataset.confirm)) e.preventDefault();
+  });
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (f.dataset && f.dataset.confirm && !confirm(f.dataset.confirm)) e.preventDefault();
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target.matches('[data-autosubmit]') && e.target.form) e.target.form.submit();
+  });
+
   // --- aggiornamento automatico dei blocchi [data-refresh], con "pop" sui punteggi cambiati
   function snapshot(root) {
     var m = {};
     root.querySelectorAll('[data-k]').forEach(function (e) { m[e.dataset.k] = e.dataset.v; });
     return m;
   }
+  function openState(root) {
+    return Array.prototype.map.call(root.querySelectorAll('details'), function (d) { return d.open; });
+  }
   document.querySelectorAll('[data-refresh]').forEach(function (el) {
     var every = parseInt(el.dataset.every || '5000', 10);
-    var timer = null, last = el.innerHTML;
+    var last = null, inflight = false;
     function tick() {
-      if (document.hidden) return;
+      if (document.hidden || inflight) return;
+      inflight = true;
       fetch(el.dataset.refresh, {headers: {'X-Requested-With': 'fetch'}})
         .then(function (r) { return r.ok ? r.text() : null; })
         .then(function (html) {
-          if (html === null || html === last) return;
-          var before = snapshot(el);
+          if (html === null) return;
+          if (last === null) { last = html; return; }   // la prima risposta è già ciò che si vede
+          if (html === last) return;
           last = html;
+          var before = snapshot(el), open = openState(el);
+          var scroll = Array.prototype.map.call(el.querySelectorAll('.bracket'), function (b) { return b.scrollLeft; });
           el.innerHTML = html;
-          el.querySelectorAll('.stagger>*, main>*').forEach(function (n) { n.style.animation = 'none'; });
+          el.querySelectorAll('.stagger>*').forEach(function (n) { n.style.animation = 'none'; });
+          el.querySelectorAll('details').forEach(function (d, i) { if (open[i]) d.open = true; });
+          el.querySelectorAll('.bracket').forEach(function (b, i) { if (scroll[i]) b.scrollLeft = scroll[i]; });
           el.querySelectorAll('[data-k]').forEach(function (e) {
             if (e.dataset.k in before && before[e.dataset.k] !== e.dataset.v) e.classList.add('bump');
           });
-        }).catch(function () {});
+        }).catch(function () {})
+        .then(function () { inflight = false; });
     }
-    timer = setInterval(tick, every);
+    tick();
+    setInterval(tick, every);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
   });
 

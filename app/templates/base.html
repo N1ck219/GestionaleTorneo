@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<svg class="sprite" aria-hidden="true">
   <symbol id="i-live" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v18M3 12h18M6 5.5c4 3.5 4 9.5 0 13M18 5.5c-4 3.5-4 9.5 0 13" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
   <symbol id="i-groups" viewBox="0 0 24 24"><path d="M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
   <symbol id="i-bracket" viewBox="0 0 24 24"><path d="M3 5h5v5H3zM3 14h5v5H3zM16 9.5h5v5h-5zM8 7.5h4v9H8M12 12h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
@@ -53,7 +53,7 @@
   {% for ep, icon, label in [('main.home','live','Live'),('main.groups_page','groups','Gironi'),('main.bracket_page','bracket','Tabelloni'),('main.schedule_page','cal','Calendario'),('main.teams_page','teams','Squadre')] %}
   <a href="{{ url_for(ep) }}" {{ 'aria-current=page' if request.endpoint == ep }}><svg><use href="#i-{{ icon }}"/></svg><span>{{ label }}</span></a>
   {% endfor %}
-  <a href="{{ area_url }}" {{ 'aria-current=page' if request.endpoint in ('main.login','main.team_home','main.table_home') or (request.endpoint or '').startswith('main.admin') }}><svg><use href="#i-user"/></svg><span>{{ area_label }}</span></a>
+  <a href="{{ area_url }}" {{ 'aria-current=page' if (request.endpoint or '')[5:].startswith(('login','register','team_','player_','cert_','table_','admin')) }}><svg><use href="#i-user"/></svg><span>{{ area_label }}</span></a>
 </nav>
 <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>

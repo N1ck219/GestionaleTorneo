@@ -195,12 +195,14 @@ def group_stage_complete(db):
     return row["n"] > 0 and row["n"] == row["f"]
 
 
-def overall_ranking(db):
-    rows = []
-    for g in group_data(db):
-        rows.extend(g["standings"])
+def _ranked(groups):
+    rows = [r for g in groups for r in g["standings"]]
     rows.sort(key=T.overall_sort_key)
     return rows
+
+
+def overall_ranking(db):
+    return _ranked(group_data(db))
 
 
 def generate_knockout(db, main_size=None, ko_start=None):
@@ -208,15 +210,15 @@ def generate_knockout(db, main_size=None, ko_start=None):
         raise TournamentError("La fase finale è già stata generata.")
     if not group_stage_complete(db):
         raise TournamentError("Concludi tutte le partite dei gironi prima di generare la fase finale.")
-    ranking = [r["team_id"] for r in overall_ranking(db)]
+    groups = group_data(db)
+    ranking = [r["team_id"] for r in _ranked(groups)]
     n = len(ranking)
     if n < 4:
         raise TournamentError("Servono almeno 4 squadre per due tabelloni.")
     main_size = main_size or (n + 1) // 2
     if not 2 <= main_size <= n - 2:
         raise TournamentError("Ogni tabellone deve avere almeno 2 squadre.")
-    group_of = {r["team_id"]: gid for gid, r in
-                ((g["id"], r) for g in group_data(db) for r in g["standings"])}
+    group_of = {r["team_id"]: g["id"] for g in groups for r in g["standings"]}
     brackets = {phase: T.avoid_same_group(T.build_bracket(teams), group_of)
                 for phase, teams in (("main", ranking[:main_size]), ("cons", ranking[main_size:]))}
 
@@ -246,6 +248,7 @@ def generate_knockout(db, main_size=None, ko_start=None):
     batches = []
     for r in range(n_rounds):
         batch = [ids[(p, m["r"], m["i"])] for p in ("main", "cons")
+                 # a parità di turno la finale 3º posto si gioca prima della finale
                  for m in sorted(brackets[p], key=lambda x: not x.get("third"))
                  if m["r"] == r]
         if batch:
@@ -267,8 +270,9 @@ def bracket_data(db, phase):
     rows = [dict(m) for m in db.execute(
         MATCH_SELECT + " WHERE m.phase = ? ORDER BY m.round, m.id", (phase,))]
     rounds, third = {}, None
+    third_ids = {m["loser_next_match_id"] for m in rows if m["loser_next_match_id"]}
     for m in rows:
-        if m["round_label"] == "Finale 3º posto":
+        if m["id"] in third_ids:
             third = m
             continue
         rounds.setdefault(m["round"], dict(label=m["round_label"], matches=[]))["matches"].append(m)

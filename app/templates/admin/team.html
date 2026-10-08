@@ -8,7 +8,7 @@
   <input type="hidden" name="_csrf" value="{{ csrf }}">
   {% if team.status == 'confirmed' %}<button name="action" value="unconfirm" class="btn ghost">Segna come in attesa</button>
   {% else %}<button name="action" value="confirm" class="btn">Conferma iscrizione</button>{% endif %}
-  <button name="action" value="delete" class="btn danger" onclick="return confirm('Eliminare definitivamente la squadra?')">Elimina</button>
+  <button name="action" value="delete" class="btn danger" data-confirm="Eliminare definitivamente la squadra?">Elimina</button>
 </form>
 <section class="card"><h2>Giocatori</h2>
 {% for p in team.players %}

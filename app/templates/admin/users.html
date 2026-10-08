@@ -13,7 +13,7 @@
   <form method="post" class="prow"><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="user_id" value="{{ u.id }}">
     <input type="password" name="password" placeholder="nuova password" minlength="8" autocomplete="new-password">
     <button name="action" value="password" class="btn small ghost">Cambia password</button>
-    {% if u.role == 'scorer' %}<button name="action" value="delete" class="btn small danger" onclick="return confirm('Eliminare?')">Elimina</button>{% endif %}
+    {% if u.role == 'scorer' %}<button name="action" value="delete" class="btn small danger" data-confirm="Eliminare?">Elimina</button>{% endif %}
   </form></td></tr>{% endfor %}
 </tbody></table></div>
 {% endblock %}

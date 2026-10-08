@@ -26,7 +26,7 @@
       <form method="post" class="prow"><input type="hidden" name="_csrf" value="{{ csrf }}">
         <input type="hidden" name="action" value="move"><input type="hidden" name="team_id" value="{{ t.id }}">
         <span>{{ t.name }}</span>
-        {% if phase == 'drawn' %}<select name="group_id" onchange="this.form.submit()">
+        {% if phase == 'drawn' %}<select name="group_id" data-autosubmit>
           {% for g2 in groups %}<option value="{{ g2.id }}" {{ 'selected' if g2.id == g.id }}>{{ g2.name }}</option>{% endfor %}
         </select>{% endif %}
       </form>
@@ -54,14 +54,14 @@
     <label>Inizio fase finale <input type="datetime-local" name="ko_start"></label>
     <button class="btn">Genera tabelloni</button></form>
   {% endif %}
-  <form method="post" onsubmit="return confirm('Eliminare il calendario dei gironi?')"><input type="hidden" name="_csrf" value="{{ csrf }}">
+  <form method="post" data-confirm="Eliminare il calendario dei gironi?"><input type="hidden" name="_csrf" value="{{ csrf }}">
     <input type="hidden" name="action" value="delete_matches"><button class="btn danger small">Elimina calendario gironi (solo se nessuna partita è iniziata)</button></form>
 </section>
 {% endif %}
 
 {% if phase == 'knockout' %}
 <section class="card"><h2>Fase finale generata</h2>
-  <form method="post" onsubmit="return confirm('Eliminare i tabelloni?')"><input type="hidden" name="_csrf" value="{{ csrf }}">
+  <form method="post" data-confirm="Eliminare i tabelloni?"><input type="hidden" name="_csrf" value="{{ csrf }}">
     <input type="hidden" name="action" value="delete_knockout"><button class="btn danger small">Elimina tabelloni (solo se non iniziati)</button></form>
 </section>
 {% endif %}
