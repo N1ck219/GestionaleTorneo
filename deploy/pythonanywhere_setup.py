@@ -22,12 +22,12 @@ import urllib.request
 REPO = os.environ.get("REPO_URL", "https://github.com/N1ck219/GestionaleTorneo.git")
 BRANCH = os.environ.get("BRANCH", "claude/basketball-tournament-manager-qek7s7")
 USER = getpass.getuser()
-DOMAIN = "%s.pythonanywhere.com" % USER
+DOMAIN = "%s.pythonanywhere.com" % USER.lower()   # PythonAnywhere usa sempre minuscole
 HOME = os.path.expanduser("~")
 APP_DIR = os.path.join(HOME, "GestionaleTorneo")
 DATA_DIR = os.path.join(HOME, "torneo-data")
 CONF = os.path.join(DATA_DIR, "deploy.json")           # ricorda email boss e password iniziale
-WSGI_FILE = "/var/www/%s_wsgi.py" % DOMAIN.replace(".", "_")
+WSGI_FILE = "/var/www/%s_wsgi.py" % DOMAIN.replace(".", "_")  # valore atteso; vedi find_wsgi()
 API = "https://www.pythonanywhere.com/api/v0/user/%s" % USER
 PYVER = "python%d%d" % sys.version_info[:2]
 
@@ -55,6 +55,17 @@ def api(method, path, token, data=None):
             return r.status, r.read().decode()
     except urllib.error.HTTPError as e:
         return e.code, e.read().decode()
+
+
+def find_wsgi():
+    """Il file WSGI creato da PythonAnywhere: quello atteso, altrimenti l'unico presente in /var/www."""
+    import glob
+    if os.path.exists(WSGI_FILE):
+        return WSGI_FILE
+    found = glob.glob("/var/www/*_wsgi.py")
+    if len(found) == 1:
+        return found[0]
+    sys.exit("Non trovo il file WSGI del sito in /var/www (trovati: %s)." % (found or "nessuno"))
 
 
 def main():
@@ -102,8 +113,10 @@ def main():
                        {"virtualenv_path": venv, "source_directory": APP_DIR, "force_https": "true"})
     if status != 200:
         sys.exit("Configurazione del sito non riuscita (%s): %s" % (status, body[:300]))
-    with open(WSGI_FILE, "w") as f:
+    wsgi = find_wsgi()
+    with open(wsgi, "w") as f:
         f.write(WSGI_TEMPLATE.format(app_dir=APP_DIR, data_dir=DATA_DIR, email=conf["email"], password=conf["password"]))
+    print("  file di configurazione scritto:", wsgi)
 
     # 5. riavvio
     print("\n[5/5] Ricarico il sito")
