@@ -51,7 +51,7 @@ def test_bracket_is_consistent(k):
     b = T.build_bracket(teams)
     present = [t for m in b for t in (m["team1"], m["team2"]) if t]
     assert sorted(present) == teams          # ogni squadra entra una volta
-    finals = [m for m in b if m["next"] is None]
+    finals = [m for m in b if m["next"] is None and not m.get("third")]
     assert len(finals) == 1 and finals[0]["label"] == "Finale"
     for m in b:                              # i vincitori hanno sempre dove andare
         if m["next"]:
@@ -62,3 +62,32 @@ def test_best_seed_gets_bye():
     b = T.build_bracket([1, 2, 3, 4, 5])
     assert not any(1 in (m["team1"], m["team2"]) and m["r"] == 0 for m in b)
     assert 1 in [t for m in b if m["r"] == 1 for t in (m["team1"], m["team2"])]
+
+
+def test_third_place_only_with_two_semifinals():
+    assert not any(m.get("third") for m in T.build_bracket([1, 2]))
+    assert not any(m.get("third") for m in T.build_bracket([1, 2, 3]))   # una sola semifinale reale
+    for k in (4, 5, 6, 7, 8, 12):
+        b = T.build_bracket(list(range(1, k + 1)))
+        third = [m for m in b if m.get("third")]
+        assert len(third) == 1
+        feeders = [m for m in b if m.get("loser_next") == (third[0]["r"], third[0]["i"])]
+        assert len(feeders) == 2 and {m["loser_slot"] for m in feeders} == {0, 1}
+
+
+def test_avoid_same_group_swaps_when_possible():
+    # 8 squadre in 2 gironi: le teste 1 e 8 sono dello stesso girone -> va corretto
+    group_of = {1: "A", 2: "B", 3: "A", 4: "B", 5: "B", 6: "A", 7: "B", 8: "A"}
+    b = T.build_bracket(list(range(1, 9)))
+    assert any(group_of[m["team1"]] == group_of[m["team2"]] for m in b if m["r"] == 0)
+    T.avoid_same_group(b, group_of)
+    first = [m for m in b if m["r"] == 0]
+    assert sorted(t for m in first for t in (m["team1"], m["team2"])) == list(range(1, 9))
+    assert not any(group_of[m["team1"]] == group_of[m["team2"]] for m in first)
+    assert [m["team1"] for m in first] == [1, 4, 2, 3]       # teste di serie alte invariate
+
+
+def test_first_of_group_meets_last_of_other_group():
+    b = T.build_bracket(list(range(1, 9)))
+    pairs = {m["team1"]: m["team2"] for m in b if m["r"] == 0}
+    assert pairs[1] == 8 and pairs[2] == 7

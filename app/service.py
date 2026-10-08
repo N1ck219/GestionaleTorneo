@@ -215,8 +215,10 @@ def generate_knockout(db, main_size=None, ko_start=None):
     main_size = main_size or (n + 1) // 2
     if not 2 <= main_size <= n - 2:
         raise TournamentError("Ogni tabellone deve avere almeno 2 squadre.")
-    brackets = {"main": T.build_bracket(ranking[:main_size]),
-                "cons": T.build_bracket(ranking[main_size:])}
+    group_of = {r["team_id"]: gid for gid, r in
+                ((g["id"], r) for g in group_data(db) for r in g["standings"])}
+    brackets = {phase: T.avoid_same_group(T.build_bracket(teams), group_of)
+                for phase, teams in (("main", ranking[:main_size]), ("cons", ranking[main_size:]))}
 
     minutes = get_int(db, "match_minutes", 20)
     courts = max(1, get_int(db, "courts", 1))
@@ -230,18 +232,22 @@ def generate_knockout(db, main_size=None, ko_start=None):
     for phase, bracket in brackets.items():
         for m in sorted(bracket, key=lambda x: (-x["r"], x["i"])):
             nxt = ids.get((phase, ) + m["next"]) if m["next"] else None
+            lnx = ids.get((phase, ) + m["loser_next"]) if m.get("loser_next") else None
             ids[(phase, m["r"], m["i"])] = db.execute(
                 "INSERT INTO matches(phase, round, round_label, team1_id, team2_id,"
-                " next_match_id, next_slot) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                " next_match_id, next_slot, loser_next_match_id, loser_next_slot)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (phase, m["r"], m["label"], m["team1"], m["team2"],
-                 nxt, m["slot"] if nxt else None)).lastrowid
+                 nxt, m["slot"] if nxt else None,
+                 lnx, m["loser_slot"] if lnx else None)).lastrowid
 
     # calendario: turno per turno, tabellone principale prima della consolazione
     n_rounds = max([m["r"] for b in brackets.values() for m in b] + [0]) + 1
     batches = []
     for r in range(n_rounds):
         batch = [ids[(p, m["r"], m["i"])] for p in ("main", "cons")
-                 for m in brackets[p] if m["r"] == r]
+                 for m in sorted(brackets[p], key=lambda x: not x.get("third"))
+                 if m["r"] == r]
         if batch:
             batches.append(batch)
     seq = _next_seq(db)
@@ -260,10 +266,13 @@ def delete_knockout(db):
 def bracket_data(db, phase):
     rows = [dict(m) for m in db.execute(
         MATCH_SELECT + " WHERE m.phase = ? ORDER BY m.round, m.id", (phase,))]
-    rounds = {}
+    rounds, third = {}, None
     for m in rows:
+        if m["round_label"] == "Finale 3º posto":
+            third = m
+            continue
         rounds.setdefault(m["round"], dict(label=m["round_label"], matches=[]))["matches"].append(m)
-    return [rounds[k] for k in sorted(rounds)]
+    return dict(rounds=[rounds[k] for k in sorted(rounds)], third=third)
 
 
 # ---------------------------------------------------------------- punteggi
@@ -303,12 +312,29 @@ def set_score(db, match_id, s1, s2):
         raise TournamentError("La partita non è in corso.")
 
 
+def _targets(m):
+    """(match_id, slot, "winner"|"loser") verso cui avanzano vincitore e perdente."""
+    out = []
+    if m["next_match_id"]:
+        out.append((m["next_match_id"], m["next_slot"], "winner"))
+    if m.get("loser_next_match_id"):
+        out.append((m["loser_next_match_id"], m["loser_next_slot"], "loser"))
+    return out
+
+
+def _check_targets_untouched(db, m):
+    for mid, _slot, _kind in _targets(m):
+        if get_match(db, mid)["status"] != "scheduled":
+            raise TournamentError("Il turno successivo è già iniziato.")
+
+
 def _advance(db, m):
-    if not m["next_match_id"]:
-        return
-    nxt = get_match(db, m["next_match_id"])
-    col = "team1_id" if m["next_slot"] == 0 else "team2_id"
-    db.execute("UPDATE matches SET %s = ? WHERE id = ?" % col, (_winner_slot(m), nxt["id"]))
+    winner = _winner_slot(m)
+    loser = m["team2_id"] if winner == m["team1_id"] else m["team1_id"]
+    for mid, slot, kind in _targets(m):
+        col = "team1_id" if slot == 0 else "team2_id"
+        db.execute("UPDATE matches SET %s = ? WHERE id = ?" % col,
+                   (winner if kind == "winner" else loser, mid))
 
 
 def finish_match(db, match_id):
@@ -318,10 +344,7 @@ def finish_match(db, match_id):
         raise TournamentError("La partita non è in corso.")
     if m["score1"] == m["score2"]:
         raise TournamentError("Punteggio in parità: serve un vincitore (supplementare).")
-    if m["next_match_id"]:
-        nxt = get_match(db, m["next_match_id"])
-        if nxt["status"] != "scheduled":
-            raise TournamentError("Il turno successivo è già iniziato.")
+    _check_targets_untouched(db, m)
     db.execute("UPDATE matches SET status = 'finished', finished_at = ? WHERE id = ?",
                (datetime.now().strftime(TIME_FMT), match_id))
     _advance(db, m)
@@ -331,10 +354,8 @@ def reopen_match(db, match_id):
     m = get_match(db, match_id)
     if not m or m["status"] != "finished":
         raise TournamentError("La partita non è conclusa.")
-    if m["next_match_id"]:
-        nxt = get_match(db, m["next_match_id"])
-        if nxt["status"] != "scheduled":
-            raise TournamentError("Il turno successivo è già iniziato: non si può riaprire.")
-        col = "team1_id" if m["next_slot"] == 0 else "team2_id"
-        db.execute("UPDATE matches SET %s = NULL WHERE id = ?" % col, (nxt["id"],))
+    _check_targets_untouched(db, m)
+    for mid, slot, _kind in _targets(m):
+        col = "team1_id" if slot == 0 else "team2_id"
+        db.execute("UPDATE matches SET %s = NULL WHERE id = ?" % col, (mid,))
     db.execute("UPDATE matches SET status = 'live', finished_at = NULL WHERE id = ?", (match_id,))

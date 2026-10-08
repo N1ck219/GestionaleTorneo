@@ -1,16 +1,16 @@
-{% from '_macros.html' import match_card %}
+{% from '_macros.html' import match_card, empty %}
 <section>
-  <h2>In corso</h2>
-  {% if live %}<div class="grid">{% for m in live %}{{ match_card(m) }}{% endfor %}</div>
-  {% else %}<p class="muted">Nessuna partita in corso in questo momento.</p>{% endif %}
+  <h2><i class="dot"></i> In corso</h2>
+  {% if live %}<div class="grid stagger">{% for m in live %}{{ match_card(m) }}{% endfor %}</div>
+  {% else %}{{ empty('🏀', 'Nessuna partita in corso in questo momento.') }}{% endif %}
 </section>
 <section>
   <h2>Prossime partite</h2>
-  {% if upcoming %}<div class="grid">{% for m in upcoming %}{{ match_card(m) }}{% endfor %}</div>
-  {% else %}<p class="muted">Nessuna partita in programma.</p>{% endif %}
+  {% if upcoming %}<div class="grid stagger">{% for m in upcoming %}{{ match_card(m) }}{% endfor %}</div>
+  {% else %}{{ empty('🗓️', 'Nessuna partita in programma.') }}{% endif %}
 </section>
 <section>
   <h2>Ultimi risultati</h2>
-  {% if recent %}<div class="grid">{% for m in recent %}{{ match_card(m) }}{% endfor %}</div>
-  {% else %}<p class="muted">Ancora nessun risultato.</p>{% endif %}
+  {% if recent %}<div class="grid stagger">{% for m in recent %}{{ match_card(m) }}{% endfor %}</div>
+  {% else %}{{ empty('📋', 'Ancora nessun risultato.') }}{% endif %}
 </section>

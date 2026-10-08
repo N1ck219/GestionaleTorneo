@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% from '_macros.html' import empty %}
 {% block content %}
 <h1>Squadre iscritte</h1>
-{% if not teams %}<p class="muted">Nessuna squadra confermata per ora.</p>{% endif %}
-<div class="grid">
+{% if not teams %}{{ empty('👟', 'Nessuna squadra confermata per ora.') }}{% endif %}
+<div class="grid stagger">
 {% for t in teams %}
   <div class="card"><h3>{{ t.name }}</h3>
   <p class="muted">{{ t.group_name or 'Girone da assegnare' }}</p>

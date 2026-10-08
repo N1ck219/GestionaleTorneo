@@ -109,9 +109,10 @@ def test_full_tournament(client, tmp_path):
     from app import service as S
     db = connect(c.application.config["DB_PATH"])
     assert S.tournament_phase(db) == "knockout"
-    # 9 squadre: principale 5, consolazione 4 -> 4 + 3 = 7 partite
-    assert db.execute("SELECT COUNT(*) FROM matches WHERE phase='main'").fetchone()[0] == 4
-    assert db.execute("SELECT COUNT(*) FROM matches WHERE phase='cons'").fetchone()[0] == 3
+    # 9 squadre: principale 5 (4 + finale 3º posto = 5 partite), consolazione 4 (2 semi + finale + 3º = 4)
+    assert db.execute("SELECT COUNT(*) FROM matches WHERE phase='main'").fetchone()[0] == 5
+    assert db.execute("SELECT COUNT(*) FROM matches WHERE phase='cons'").fetchone()[0] == 4
+    assert "Finale 3º posto" in c.get("/tabellone").get_data(as_text=True)
 
     # gioca tutta la fase finale turno per turno
     for _ in range(4):
@@ -123,6 +124,13 @@ def test_full_tournament(client, tmp_path):
             assert api(c, "/api/match/%d/finish" % r["id"]).status_code == 200
     db = connect(c.application.config["DB_PATH"])
     assert db.execute("SELECT COUNT(*) FROM matches WHERE status!='finished'").fetchone()[0] == 0
+    # nella finale per il 3º posto sono finiti i due perdenti delle semifinali
+    for ph in ("main", "cons"):
+        third = db.execute("SELECT * FROM matches WHERE phase=? AND round_label='Finale 3º posto'", (ph,)).fetchone()
+        semis = db.execute("SELECT * FROM matches WHERE phase=? AND loser_next_match_id=?", (ph, third["id"])).fetchall()
+        assert len(semis) == 2
+        losers = {s["team1_id"] if s["score1"] < s["score2"] else s["team2_id"] for s in semis}
+        assert {third["team1_id"], third["team2_id"]} == losers
 
 
 def test_team_area_and_cert_upload(client, tmp_path):

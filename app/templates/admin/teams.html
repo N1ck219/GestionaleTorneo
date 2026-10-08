@@ -2,7 +2,7 @@
 {% block content %}
 {% include 'admin/_nav.html' %}
 <h1>Squadre</h1>
-<table class="std wide">
+<div class="tablewrap"><table class="std wide">
   <thead><tr><th class="l">Squadra</th><th>Giocatori</th><th>Certificati</th><th>Stato</th><th>Girone</th></tr></thead>
   <tbody>
   {% for t in teams %}
@@ -12,5 +12,5 @@
       <td>{{ 'Confermata' if t.status == 'confirmed' else 'In attesa' }}</td><td>{{ t.group_name or '—' }}</td></tr>
   {% endfor %}
   </tbody>
-</table>
+</table></div>
 {% endblock %}

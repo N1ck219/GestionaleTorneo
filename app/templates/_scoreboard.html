@@ -1,8 +1,8 @@
 <div class="board {{ m.status }}">
-  <div class="meta">{{ m|match_title }}{% if m.court %} · Campo {{ m.court }}{% endif %}</div>
-  <div class="bteam"><span>{{ m.team1_name or '—' }}</span><b>{{ m.score1 }}</b></div>
-  <div class="bteam"><span>{{ m.team2_name or '—' }}</span><b>{{ m.score2 }}</b></div>
-  <div class="foot">{% if m.status == 'live' %}<span class="badge live">● LIVE</span>
+  <div class="meta"><span>{{ m|match_title }}</span><span>{% if m.court %}Campo {{ m.court }}{% endif %}</span></div>
+  <div class="bteam"><span>{{ m.team1_name or 'Da definire' }}</span><b data-k="b{{ m.id }}-1" data-v="{{ m.score1 }}">{{ m.score1 }}</b></div>
+  <div class="bteam"><span>{{ m.team2_name or 'Da definire' }}</span><b data-k="b{{ m.id }}-2" data-v="{{ m.score2 }}">{{ m.score2 }}</b></div>
+  <div class="foot">{% if m.status == 'live' %}<span class="badge live"><i class="dot"></i>LIVE</span>
     {% elif m.status == 'finished' %}<span class="badge">Finale</span>
     {% else %}<span class="badge dim">Da giocare {{ m.start_time|when }}</span>{% endif %}</div>
 </div>

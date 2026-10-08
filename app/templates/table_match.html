@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<p><a href="{{ url_for('main.table_home') }}">← Tutte le partite</a></p>
+<a class="back" href="{{ url_for('main.table_home') }}">← Tutte le partite</a>
 <div class="panel" id="panel" data-id="{{ m.id }}" data-status="{{ m.status }}" data-boss="{{ 1 if user.role == 'boss' else 0 }}">
   <div class="meta">{{ m|match_title }}{% if m.court %} · Campo {{ m.court }}{% endif %}</div>
   <div class="sides">

@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS matches (
     seq INTEGER NOT NULL DEFAULT 0,
     next_match_id INTEGER,
     next_slot INTEGER,
+    loser_next_match_id INTEGER,
+    loser_next_slot INTEGER,
     finished_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
@@ -98,6 +100,10 @@ def init_db(path):
     conn = connect(path)
     conn.execute("PRAGMA journal_mode = WAL")
     conn.executescript(SCHEMA)
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(matches)")}
+    for col in ("loser_next_match_id", "loser_next_slot"):  # database creati con la v1
+        if col not in cols:
+            conn.execute("ALTER TABLE matches ADD COLUMN %s INTEGER" % col)
     for k, v in DEFAULT_SETTINGS.items():
         conn.execute("INSERT OR IGNORE INTO settings(key, value) VALUES (?, ?)", (k, v))
     conn.commit()

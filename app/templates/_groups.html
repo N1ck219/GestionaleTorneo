@@ -1,5 +1,6 @@
-{% from '_macros.html' import match_card, standings_table %}
-{% if not groups %}<p class="muted">I gironi non sono ancora stati sorteggiati.</p>{% endif %}
+{% from '_macros.html' import match_card, standings_table, empty %}
+{% if not groups %}{{ empty('🎲', 'I gironi non sono ancora stati sorteggiati.') }}{% endif %}
+<div class="grid2 stagger">
 {% for g in groups %}
 <section class="card">
   <h2>{{ g.name }}</h2>
@@ -8,3 +9,4 @@
     <div class="grid">{% for m in g.matches %}{{ match_card(m) }}{% endfor %}</div></details>{% endif %}
 </section>
 {% endfor %}
+</div>

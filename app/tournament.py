@@ -175,7 +175,36 @@ def build_bracket(seeded_teams):
             del matches[(0, i)]
             if nxt is not None:
                 nxt["team1" if i % 2 == 0 else "team2"] = winner
+    # finale per il 3º posto: serve che entrambe le semifinali si giochino davvero
+    if n_rounds >= 2 and (n_rounds - 2, 0) in matches and (n_rounds - 2, 1) in matches:
+        last = n_rounds - 1
+        matches[(last, 1)] = dict(r=last, i=1, team1=None, team2=None,
+                                  label="Finale 3º posto", next=None, slot=0, third=True)
+        for i in (0, 1):
+            matches[(n_rounds - 2, i)]["loser_next"] = (last, 1)
+            matches[(n_rounds - 2, i)]["loser_slot"] = i
     return sorted(matches.values(), key=lambda m: (m["r"], m["i"]))
+
+
+def avoid_same_group(bracket, group_of):
+    """Evita, dove possibile, che nel primo turno si incontrino squadre dello
+    stesso girone: scambia la squadra con il seed più basso con quella di un'altra
+    partita dello stesso turno (le teste di serie alte restano dove sono)."""
+    ready = [m for m in bracket if m["team1"] is not None and m["team2"] is not None]
+
+    def same(a, b):
+        return group_of.get(a) is not None and group_of.get(a) == group_of.get(b)
+
+    for m in ready:
+        if not same(m["team1"], m["team2"]):
+            continue
+        others = sorted((n for n in ready if n is not m and n["r"] == m["r"]),
+                        key=lambda n: abs(n["i"] - m["i"]))
+        for n in others:
+            if not same(m["team1"], n["team2"]) and not same(n["team1"], m["team2"]):
+                m["team2"], n["team2"] = n["team2"], m["team2"]
+                break
+    return bracket
 
 
 # ------------------------------------------------------ calendario

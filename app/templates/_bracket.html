@@ -1,12 +1,16 @@
-{% from '_macros.html' import match_card %}
-{% macro tree(rounds) %}
-  {% if not rounds %}<p class="muted">Non ancora generato.</p>{% endif %}
+{% from '_macros.html' import match_card, empty %}
+{% macro tree(b, title) %}
+<section>
+  <h2>{{ title }}</h2>
+  {% if not b.rounds %}{{ empty('🏆', 'Il tabellone sarà generato al termine dei gironi.') }}{% endif %}
   <div class="bracket">
-  {% for r in rounds %}
+  {% for r in b.rounds %}
     <div class="col"><h3>{{ r.label }}</h3>
-      {% for m in r.matches %}{{ match_card(m) }}{% endfor %}</div>
+      <div class="colm">{% for m in r.matches %}{{ match_card(m) }}{% endfor %}</div></div>
   {% endfor %}
   </div>
+  {% if b.third %}<h3 class="third">🥉 Finale 3º posto</h3><div class="grid"><div>{{ match_card(b.third) }}</div></div>{% endif %}
+</section>
 {% endmacro %}
-<section><h2>🏆 Fase finale</h2>{{ tree(main) }}</section>
-<section><h2>Tabellone di consolazione</h2>{{ tree(cons) }}</section>
+{{ tree(main, '🏆 Fase finale') }}
+{{ tree(cons, 'Tabellone di consolazione') }}

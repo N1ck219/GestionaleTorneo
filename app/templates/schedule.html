@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% from '_macros.html' import match_card %}
+{% from '_macros.html' import match_card, empty %}
 {% block content %}
 <h1>Calendario</h1>
-{% if not matches %}<p class="muted">Il calendario sarà pubblicato dopo il sorteggio dei gironi.</p>{% endif %}
-<div class="grid">{% for m in matches %}{{ match_card(m) }}{% endfor %}</div>
+{% if not matches %}{{ empty('🗓️', 'Il calendario sarà pubblicato dopo il sorteggio dei gironi.') }}{% endif %}
+<div class="grid stagger">{% for m in matches %}{{ match_card(m) }}{% endfor %}</div>
 {% endblock %}
